@@ -1,0 +1,94 @@
+on:
+  push:
+    branches:
+      - dev
+      - qa
+      - prod
+  pull_request:
+    types: [merged]
+
+name: dotnet-pipeline
+
+jobs:
+  continuous-integration:
+    name: ci-cd-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION}}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Terraform Format
+        id: fmt
+        working-directory: ./infra
+        run: terraform fmt -check
+
+      - name: Terraform Non-prod Init
+        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
+        working-directory: ./infra
+        id: non-prod-init
+        run:
+          terraform init -reconfigure
+          -backend-config=bucket="terraform-state-bucket-cicd"
+          -backend-config="key= "non-prod/terraform-state-non-prod.json"
+          -backend-config="region="us-east-1"
+
+      - name: Terraform Prod Init
+        if: github.ref == 'refs/heads/prod'
+        working-directory: ./infra
+        id: prod-init
+        run:
+          terraform init -reconfigure
+          -backend-config=bucket="terraform-state-bucket-cicd"
+          -backend-config="key="prod/terraform-state-prod.json"
+          -backend-config="region="us-east-1"
+
+      - name: Terraform Non-Prod-Validate
+        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
+        working-directory: ./infra
+        id: non-prod-validate
+        run: terraform validate
+
+      - name: Terraform Prod-Validate
+        if: github.ref == 'refs/heads/prod'
+        working-directory: ./infra
+        id: prod-validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
+        id: non-prod-plan
+        working-directory: ./infra
+        run:
+          terraform plan -no-color
+          -var-file=environment/non-prod-properties.tfvars
+        continue-on-error: true
+
+      - name: Terraform Plan Status
+        id: prod-plan
+        working-directory: ./infra
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Non-Prod-Apply
+        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
+        working-directory: ./infra
+        run:
+          terraform apply -var-file=environment/non-prod-properties.tfvars
+          --auto-approve
+
+      - name: Terraform Prod-Apply
+        if: github.ref == 'refs/heads/prod'
+        working-directory: ./infra
+        run:
+          terraform apply -var-file=environment/prod-properties.tfvars
+          --auto-approve
