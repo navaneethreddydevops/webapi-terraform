@@ -272,26 +272,26 @@ resource "aws_lb" "webapi" {
   }
 }
 
-// resource "aws_lb_target_group" "loadbalancer_targetgroup" {
-//   name        = "webapi-tg-${var.environment}"
-//   port        = "80"
-//   protocol    = "HTTP"
-//   vpc_id      = aws_vpc.vpc_devops.id
-//   target_type = "ip"
+resource "aws_lb_target_group" "loadbalancer_targetgroup" {
+  name        = "webapi-tg-${var.environment}"
+  port        = "80"
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.vpc_devops.id
+  target_type = "ip"
 
-//   depends_on = [aws_lb.webapi]
-// }
-
-resource "aws_lb_listener" "front_end" {
-  load_balancer_arn = aws_lb.alb.arn
-  port              = "80"
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.loadbalancer_targetgroup.arn
-  }
+  depends_on = [aws_lb.webapi]
 }
+
+// resource "aws_lb_listener" "front_end" {
+//   load_balancer_arn = aws_lb.alb.arn
+//   port              = "80"
+//   protocol          = "HTTP"
+
+//   default_action {
+//     type             = "forward"
+//     target_group_arn = aws_lb_target_group.loadbalancer_targetgroup.arn
+//   }
+// }
 
 #################################################
 # ECS Service
