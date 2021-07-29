@@ -247,12 +247,74 @@ resource "aws_autoscaling_group" "auto_scaling_group" {
     create_before_destroy = true
   }
 }
-
+#########################################################################
 # ECS Cluster
+#################################################
 resource "aws_ecs_cluster" "cluster" {
   name = var.clustername
 
   lifecycle {
     create_before_destroy = true
+  }
+}
+
+#################################################
+# Load Balancer
+#################################################
+resource "aws_lb" "webapi" {
+  name               = "webapi-${var.environment}"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.instance_security_group.id]
+  subnets            = [aws_subnet.public_subnet_one.id, aws_subnet.public_subnet_two.id]
+  tags = {
+    Name = "webapi-${var.environment}"
+  }
+}
+
+// resource "aws_lb_target_group" "loadbalancer_targetgroup" {
+//   name        = "webapi-tg-${var.environment}"
+//   port        = "80"
+//   protocol    = "HTTP"
+//   vpc_id      = aws_vpc.vpc_devops.id
+//   target_type = "ip"
+
+//   depends_on = [aws_lb.webapi]
+// }
+
+resource "aws_lb_listener" "front_end" {
+  load_balancer_arn = aws_lb.alb.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.loadbalancer_targetgroup.arn
+  }
+}
+
+#################################################
+# ECS Service
+#################################################
+resource "aws_ecs_service" "service" {
+  name            = local.ecs.service_name
+  cluster         = aws_ecs_cluster.cluster.id
+  task_definition = aws_ecs_task_definition.task.arn
+  desired_count   = 1
+
+  network_configuration {
+    subnets          = [for s in data.aws_subnet.subnets : s.id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.group.arn # our target group
+    container_name   = local.container.name          # "application"
+    container_port   = 80
+  }
+  capacity_provider_strategy {
+    base              = 0
+    capacity_provider = "FARGATE"
+    weight            = 100
   }
 }
