@@ -168,6 +168,7 @@ resource "aws_iam_role_policy_attachment" "aws_managed_ecs_policy_attachment" {
 }
 ##############################################################################
 # Instance Security Group
+##############################################################################
 resource "aws_security_group" "instance_security_group" {
   name   = "${var.environment}-instance_security_group"
   vpc_id = aws_vpc.vpc_devops.id
@@ -215,6 +216,51 @@ resource "aws_security_group" "instance_security_group" {
     Name = "instance-security-group-${var.environment}"
   }
 }
+
+##############################################################################
+# Load balancer Security Group
+##############################################################################
+resource "aws_security_group" "loadbalancer_security_group" {
+  name   = "${var.environment}-loadbalancer_security_group"
+  vpc_id = aws_vpc.vpc_devops.id
+
+  # Inbound SSH
+  ingress {
+    from_port   = "443"
+    to_port     = "443"
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = "80"
+    to_port     = "80"
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Outbound All Protocols
+  egress {
+    from_port   = "0"
+    to_port     = "0"
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = "0"
+    to_port     = "0"
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+  tags = {
+    Name = "loadbalancer_security_group-${var.environment}"
+  }
+}
 ###############################################################################
 # Launch Configuration
 resource "aws_launch_configuration" "launch_configuartion" {
@@ -247,8 +293,9 @@ resource "aws_autoscaling_group" "auto_scaling_group" {
     create_before_destroy = true
   }
 }
-
+#################################################
 # ECS Cluster
+#################################################
 resource "aws_ecs_cluster" "cluster" {
   name = var.clustername
 
@@ -256,3 +303,73 @@ resource "aws_ecs_cluster" "cluster" {
     create_before_destroy = true
   }
 }
+
+#################################################
+# Load Balancer
+#################################################
+resource "aws_lb" "webapi" {
+  name               = "webapi-${var.environment}"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.loadbalancer_security_group.id]
+  subnets            = [aws_subnet.public_subnet_one.id, aws_subnet.public_subnet_two.id]
+  tags = {
+    Name = "webapi-${var.environment}"
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_lb_target_group" "loadbalancer_targetgroup" {
+  name        = "webapi-tg-${var.environment}"
+  port        = "5000"
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.vpc_devops.id
+  target_type = "instance"
+
+  depends_on = [aws_lb.webapi]
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_lb_listener" "front_end" {
+  load_balancer_arn = aws_lb.webapi.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.loadbalancer_targetgroup.arn
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+#################################################
+# ECS Service
+#################################################
+// resource "aws_ecs_service" "service" {
+//   name            = local.ecs.service_name
+//   cluster         = aws_ecs_cluster.cluster.id
+//   task_definition = aws_ecs_task_definition.task.arn
+//   desired_count   = 1
+
+//   network_configuration {
+//     subnets          = [for s in data.aws_subnet.subnets : s.id]
+//     assign_public_ip = true
+//   }
+
+//   load_balancer {
+//     target_group_arn = aws_lb_target_group.group.arn # our target group
+//     container_name   = local.container.name          # "application"
+//     container_port   = 80
+//   }
+//   capacity_provider_strategy {
+//     base              = 0
+//     capacity_provider = "FARGATE"
+//     weight            = 100
+//   }
+// }
