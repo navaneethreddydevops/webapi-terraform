@@ -39,7 +39,7 @@ jobs:
         run:
           terraform init -reconfigure
           -backend-config=bucket="terraform-state-bucket-cicd"
-          -backend-config="key= "non-prod/terraform-state-non-prod.json"
+          -backend-config="key="non-prod/terraform-state-non-prod.json"
           -backend-config="region="us-east-1"
 
       - name: Terraform Prod Init
