@@ -229,3 +229,12 @@ resource "aws_autoscaling_group" "auto_scaling_group" {
     create_before_destroy = true
   }
 }
+
+# ECS Cluster
+resource "aws_ecs_cluster" "cluster" {
+  name = var.clustername
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
