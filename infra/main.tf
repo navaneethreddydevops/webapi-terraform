@@ -158,6 +158,11 @@ resource "aws_iam_role_policy_attachment" "aws_managed_policy_attachment" {
   role       = aws_iam_role.instance_iam_role.name
   policy_arn = data.aws_iam_policy.ReadOnlyAccess.arn
 }
+
+resource "aws_iam_role_policy_attachment" "aws_managed_policy_attachment" {
+  role       = aws_iam_role.instance_iam_role.name
+  policy_arn = data.aws_iam_policy.EC2ContainerServiceforEC2Role.arn
+}
 ##############################################################################
 # Instance Security Group
 resource "aws_security_group" "instance_security_group" {
