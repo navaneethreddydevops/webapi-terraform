@@ -23,3 +23,7 @@ data "aws_availability_zones" "available" {}
 data "aws_iam_policy" "ReadOnlyAccess" {
   arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
 }
+
+data "aws_iam_policy" "EC2ContainerServiceforEC2Role" {
+  arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
