@@ -159,7 +159,7 @@ resource "aws_iam_role_policy_attachment" "aws_managed_policy_attachment" {
   policy_arn = data.aws_iam_policy.ReadOnlyAccess.arn
 }
 
-resource "aws_iam_role_policy_attachment" "aws_managed_policy_attachment" {
+resource "aws_iam_role_policy_attachment" "aws_managed_ecs_policy_attachment" {
   role       = aws_iam_role.instance_iam_role.name
   policy_arn = data.aws_iam_policy.EC2ContainerServiceforEC2Role.arn
 }
