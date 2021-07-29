@@ -130,7 +130,7 @@ resource "aws_launch_configuration" "launch_configuartion" {
   security_groups      = [aws_security_group.instance_security_group.id]
   iam_instance_profile = aws_iam_instance_profile.instance_profile.id
   key_name             = "keypair"
-  user_data            = file("userdata.sh")
+  user_data            = file("userdata.sh.tpl")
   lifecycle {
     create_before_destroy = true
   }
