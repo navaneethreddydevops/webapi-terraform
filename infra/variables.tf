@@ -29,3 +29,7 @@ variable "private_subnet_two_cidr" {
 variable "node_type" {
   type = any
 }
+
+variable "clustername" {
+  type = any
+}
