@@ -296,25 +296,25 @@ resource "aws_lb_target_group" "loadbalancer_targetgroup" {
 #################################################
 # ECS Service
 #################################################
-resource "aws_ecs_service" "service" {
-  name            = local.ecs.service_name
-  cluster         = aws_ecs_cluster.cluster.id
-  task_definition = aws_ecs_task_definition.task.arn
-  desired_count   = 1
+// resource "aws_ecs_service" "service" {
+//   name            = local.ecs.service_name
+//   cluster         = aws_ecs_cluster.cluster.id
+//   task_definition = aws_ecs_task_definition.task.arn
+//   desired_count   = 1
 
-  network_configuration {
-    subnets          = [for s in data.aws_subnet.subnets : s.id]
-    assign_public_ip = true
-  }
+//   network_configuration {
+//     subnets          = [for s in data.aws_subnet.subnets : s.id]
+//     assign_public_ip = true
+//   }
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.group.arn # our target group
-    container_name   = local.container.name          # "application"
-    container_port   = 80
-  }
-  capacity_provider_strategy {
-    base              = 0
-    capacity_provider = "FARGATE"
-    weight            = 100
-  }
-}
+//   load_balancer {
+//     target_group_arn = aws_lb_target_group.group.arn # our target group
+//     container_name   = local.container.name          # "application"
+//     container_port   = 80
+//   }
+//   capacity_provider_strategy {
+//     base              = 0
+//     capacity_provider = "FARGATE"
+//     weight            = 100
+//   }
+// }
