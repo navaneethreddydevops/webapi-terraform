@@ -130,7 +130,14 @@ resource "aws_launch_configuration" "launch_configuartion" {
   security_groups      = [aws_security_group.instance_security_group.id]
   iam_instance_profile = aws_iam_instance_profile.instance_profile.id
   key_name             = "keypair"
-  user_data            = data.template_file.init.rendered
+  user_data            = <<EOF
+#!/bin/bash
+# The cluster this agent should check into.
+echo 'ECS_CLUSTER=${var.clustername}' >> /etc/ecs/ecs.config
+# Disable privileged containers.
+echo 'ECS_DISABLE_PRIVILEGED=true' >> /etc/ecs/ecs.config
+EOF
+
   lifecycle {
     create_before_destroy = true
   }
