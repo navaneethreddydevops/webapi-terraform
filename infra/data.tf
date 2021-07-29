@@ -5,7 +5,7 @@ data "aws_ami" "amazon_ami" {
 
   filter {
     name   = "name"
-    values = ["amzn-ami-hvm-*-x86_64-gp2"]
+    values = ["amzn2-ami-ecs-hvm-*-x86_64-ebs"]
   }
 
   filter {
@@ -18,10 +18,6 @@ data "aws_ami" "amazon_ami" {
 
 data "aws_availability_zones" "available" {}
 
-
-data "template_file" "user_data" {
-  template = file("userdata.sh")
-}
 
 data "aws_iam_policy" "ReadOnlyAccess" {
   arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"

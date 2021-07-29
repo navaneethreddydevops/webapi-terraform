@@ -19,7 +19,7 @@ resource "random_string" "random" {
   special          = true
   override_special = "/@£$"
 }
-
+############################################################################
 # Create a VPC
 resource "aws_vpc" "vpc_devops" {
   cidr_block           = var.cidr_block
@@ -122,21 +122,7 @@ resource "aws_route_table_association" "private_subnet_two_association" {
   route_table_id = aws_route_table.private_route_table.id
 }
 
-# Launch Configuration
-resource "aws_launch_configuration" "launch_configuartion" {
-  name_prefix          = "launch_configuration-${var.environment}-${random_string.random.id}"
-  image_id             = data.aws_ami.amazon_ami.id
-  instance_type        = var.node_type
-  security_groups      = [aws_security_group.instance_security_group.id]
-  iam_instance_profile = aws_iam_instance_profile.instance_profile.id
-  key_name             = "keypair"
-  user_data            = file("userdata.sh")
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-
+###########################################################################
 # IAM Role for EC2 Instance
 resource "aws_iam_role" "instance_iam_role" {
   name = "${var.environment}-instance_iam_role"
@@ -169,7 +155,7 @@ resource "aws_iam_role_policy_attachment" "aws_managed_policy_attachment" {
   role       = aws_iam_role.instance_iam_role.name
   policy_arn = data.aws_iam_policy.ReadOnlyAccess.arn
 }
-
+##############################################################################
 # Instance Security Group
 resource "aws_security_group" "instance_security_group" {
   name   = "${var.environment}-instance_security_group"
@@ -218,6 +204,27 @@ resource "aws_security_group" "instance_security_group" {
     Name = "instance-security-group-${var.environment}"
   }
 }
+###############################################################################
+# Launch Configuration
+resource "aws_launch_configuration" "launch_configuartion" {
+  name_prefix          = "launch_configuration-${var.environment}-${random_string.random.id}"
+  image_id             = data.aws_ami.amazon_ami.id
+  instance_type        = var.node_type
+  security_groups      = [aws_security_group.instance_security_group.id]
+  iam_instance_profile = aws_iam_instance_profile.instance_profile.id
+  key_name             = "keypair"
+  user_data            = <<EOF
+#!/bin/bash
+# The cluster this agent should check into.
+echo 'ECS_CLUSTER=${var.clustername}' >> /etc/ecs/ecs.config
+# Disable privileged containers.
+echo 'ECS_DISABLE_PRIVILEGED=true' >> /etc/ecs/ecs.config
+EOF
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
 
 resource "aws_autoscaling_group" "auto_scaling_group" {
   name_prefix          = "${aws_launch_configuration.launch_configuartion.name}-${var.environment}-auto_scaling_group"
@@ -225,6 +232,15 @@ resource "aws_autoscaling_group" "auto_scaling_group" {
   min_size             = 1
   max_size             = 2
   vpc_zone_identifier  = [aws_subnet.public_subnet_one.id, aws_subnet.public_subnet_two.id]
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# ECS Cluster
+resource "aws_ecs_cluster" "cluster" {
+  name = var.clustername
+
   lifecycle {
     create_before_destroy = true
   }
