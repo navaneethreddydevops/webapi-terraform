@@ -52,16 +52,9 @@ jobs:
           -backend-config="key="prod/terraform-state-prod.json"
           -backend-config="region="us-east-1"
 
-      - name: Terraform Non-Prod-Validate
-        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
+      - name: Terraform Validate
         working-directory: ./infra
-        id: non-prod-validate
-        run: terraform validate
-
-      - name: Terraform Prod-Validate
-        if: github.ref == 'refs/heads/prod'
-        working-directory: ./infra
-        id: prod-validate
+        id: validate
         run: terraform validate
 
       - name: Terraform Plan
