@@ -330,7 +330,7 @@ resource "aws_lb_target_group" "loadbalancer_targetgroup" {
 
   health_check {
     path                = "/weatherforecast"
-    heathy_threshold    = "5"
+    healthy_threshold   = "5"
     unhealthy_threshold = "2"
     timeout             = "5"
     interval            = "30"
