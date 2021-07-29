@@ -19,8 +19,11 @@ data "aws_ami" "amazon_ami" {
 data "aws_availability_zones" "available" {}
 
 
-data "template_file" "user_data" {
-  template = file("userdata.sh")
+data "template_file" "init" {
+  template = file("userdata.sh.tpl")
+  vars = {
+    clustername = var.clustername
+  }
 }
 
 data "aws_iam_policy" "ReadOnlyAccess" {
