@@ -277,7 +277,7 @@ resource "aws_lb_target_group" "loadbalancer_targetgroup" {
   port        = "80"
   protocol    = "HTTP"
   vpc_id      = aws_vpc.vpc_devops.id
-  target_type = "ip"
+  target_type = "instance"
 
   depends_on = [aws_lb.webapi]
 }
