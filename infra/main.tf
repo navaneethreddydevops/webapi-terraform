@@ -139,6 +139,9 @@ resource "aws_iam_role" "instance_iam_role" {
       },
     ]
   })
+  lifecycle {
+    create_before_destroy = true
+  }
 
   tags = {
     tag-key = "instance_iam_role-${var.environment}"
