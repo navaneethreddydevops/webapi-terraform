@@ -320,7 +320,7 @@ resource "aws_lb" "webapi" {
 
 resource "aws_lb_target_group" "loadbalancer_targetgroup" {
   name        = "webapi-tg-${var.environment}"
-  port        = "80"
+  port        = "5000"
   protocol    = "HTTP"
   vpc_id      = aws_vpc.vpc_devops.id
   target_type = "instance"
