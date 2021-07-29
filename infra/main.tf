@@ -316,6 +316,9 @@ resource "aws_lb" "webapi" {
   tags = {
     Name = "webapi-${var.environment}"
   }
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_lb_target_group" "loadbalancer_targetgroup" {
@@ -326,6 +329,9 @@ resource "aws_lb_target_group" "loadbalancer_targetgroup" {
   target_type = "instance"
 
   depends_on = [aws_lb.webapi]
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_lb_listener" "front_end" {
@@ -336,6 +342,9 @@ resource "aws_lb_listener" "front_end" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.loadbalancer_targetgroup.arn
+  }
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
