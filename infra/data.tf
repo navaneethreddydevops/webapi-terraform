@@ -16,6 +16,7 @@ data "aws_ami" "amazon_ami" {
   owners = ["amazon"]
 }
 
+
 data "aws_availability_zones" "available" {}
 
 
